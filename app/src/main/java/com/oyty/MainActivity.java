@@ -10,7 +10,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.oyty.decoration.DividerGridItemDecoration;
-import com.oyty.layoutmanager.CustomGridLayoutManager;
+import com.oyty.layoutmanager.CustomLinearLayoutManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity implements PullRefreshRecycl
     private void initListView() {
         mPullRefreshRecyclerView.setOnRefreshListener(this);
         mPullRefreshRecyclerView.enablePullToRefresh(false);
-        mPullRefreshRecyclerView.setLayoutManager(new CustomGridLayoutManager(mContext, 3));
+        mPullRefreshRecyclerView.setLayoutManager(new CustomLinearLayoutManager(mContext));
 //        mPullRefreshRecyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL_LIST));
         mPullRefreshRecyclerView.addItemDecoration(new DividerGridItemDecoration(mContext));
 
