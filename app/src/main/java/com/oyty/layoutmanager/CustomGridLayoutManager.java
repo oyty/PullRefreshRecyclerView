@@ -32,4 +32,9 @@ public class CustomGridLayoutManager extends GridLayoutManager implements ILayou
     public int lastVisiblePosition() {
         return findLastVisibleItemPosition();
     }
+
+    @Override
+    public int firstVisiblePosition() {
+        return findFirstVisibleItemPosition();
+    }
 }

@@ -10,4 +10,11 @@ public interface ILayoutManager {
 
     int lastVisiblePosition();
 
+    int firstVisiblePosition();
+
+    int getChildCount();
+
+    int getItemCount();
+
+
 }

@@ -17,6 +17,7 @@ public class PullRefreshRecyclerView extends FrameLayout implements SwipeRefresh
     public static final int ACTION_PULL_TO_REFRESH = 1;
     public static final int ACTION_LOAD_MORE_REFRESH = 2;
     public static final int ACTION_IDLE = 0;
+    private int mCurrentState = ACTION_IDLE;
 
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private RecyclerView mRecyclerView;
@@ -26,25 +27,27 @@ public class PullRefreshRecyclerView extends FrameLayout implements SwipeRefresh
 
     private boolean isPullToRefreshEnabled;
     private OnRecyclerRefreshListener listener;
+    private static final int visibleThreshold = 5;
+    private boolean isLoadMoreEnabled;
 
     public PullRefreshRecyclerView(Context context) {
         super(context);
-        initView(context);
+        initView();
     }
 
     public PullRefreshRecyclerView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        initView(context);
+        initView();
     }
 
     public PullRefreshRecyclerView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        initView(context);
+        initView();
     }
 
-    private void initView(Context context) {
+    private void initView() {
         LayoutInflater.from(getContext()).inflate(R.layout.view_pull_refresh_recycler, this, true);
-//        mSwipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.mSwipeRefreshLayout);
+        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.mSwipeRefreshLayout);
         mRecyclerView = (RecyclerView) findViewById(R.id.mRecyclerView);
 
         initViewListener();
@@ -52,7 +55,7 @@ public class PullRefreshRecyclerView extends FrameLayout implements SwipeRefresh
     }
 
     private void initViewListener() {
-//        mSwipeRefreshLayout.setOnRefreshListener(this);
+        mSwipeRefreshLayout.setOnRefreshListener(this);
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
@@ -62,8 +65,20 @@ public class PullRefreshRecyclerView extends FrameLayout implements SwipeRefresh
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
+                if(mCurrentState == ACTION_IDLE && !isLoadMoreEnabled && checkIfNeedLoadMore()) {
+                    mCurrentState = ACTION_LOAD_MORE_REFRESH;
+                    mAdapter.onLoadMoreStateChanged(true);
+                    mSwipeRefreshLayout.setEnabled(false);
+                    listener.onLoadingMore();
+                }
             }
         });
+    }
+
+    private boolean checkIfNeedLoadMore() {
+        int totalItemCount = mLayoutManager.getItemCount();
+        int lastVisibleItem = mLayoutManager.lastVisiblePosition();
+        return totalItemCount <= (lastVisibleItem + visibleThreshold);
     }
 
     private void initDefaultConfig() {
@@ -72,8 +87,12 @@ public class PullRefreshRecyclerView extends FrameLayout implements SwipeRefresh
     }
 
     public void enablePullToRefresh(boolean enable) {
-        isPullToRefreshEnabled = enable;
-//        mSwipeRefreshLayout.setEnabled(enable);
+        this.isPullToRefreshEnabled = enable;
+        mSwipeRefreshLayout.setEnabled(enable);
+    }
+
+    public void enableLoadMore(boolean enable) {
+        this.isLoadMoreEnabled = enable;
     }
 
     /**
@@ -90,7 +109,7 @@ public class PullRefreshRecyclerView extends FrameLayout implements SwipeRefresh
      * @param colorResIds
      */
     public void setColorSchemeResources(int... colorResIds) {
-//        mSwipeRefreshLayout.setColorSchemeResources(colorResIds);
+        mSwipeRefreshLayout.setColorSchemeResources(colorResIds);
     }
 
     public void addItemDecoration(RecyclerView.ItemDecoration decoration) {
@@ -104,20 +123,48 @@ public class PullRefreshRecyclerView extends FrameLayout implements SwipeRefresh
         mRecyclerView.setAdapter(mAdapter);
     }
 
+    /**
+     * 首次进入页面进行加载
+     */
+    public void setRefreshing() {
+        mSwipeRefreshLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                mSwipeRefreshLayout.setRefreshing(true);
+                onRefresh();
+            }
+        });
+    }
+
     public void setOnRefreshListener(OnRecyclerRefreshListener listener) {
         this.listener = listener;
     }
 
     @Override
     public void onRefresh() {
-        listener.onRefresh(ACTION_PULL_TO_REFRESH);
+        mCurrentState = ACTION_PULL_TO_REFRESH;
+        listener.onPullToRefresh();
+    }
+
+    public void onRefreshCompleted() {
+        switch (mCurrentState) {
+            case ACTION_PULL_TO_REFRESH:
+                mSwipeRefreshLayout.setRefreshing(false);
+                break;
+            case ACTION_LOAD_MORE_REFRESH:
+                mAdapter.onLoadMoreStateChanged(false);
+                mSwipeRefreshLayout.setEnabled(isPullToRefreshEnabled);
+                break;
+        }
+        mCurrentState = ACTION_IDLE;
     }
 
     public interface OnRecyclerRefreshListener {
-        /**
-         * @param action 区分下拉刷新和上拉加载更多
-         */
-        void onRefresh(int action);
+        /** 下拉刷新 */
+        void onPullToRefresh();
+
+        /** 上拉加载更多 */
+        void onLoadingMore();
     }
 
 }

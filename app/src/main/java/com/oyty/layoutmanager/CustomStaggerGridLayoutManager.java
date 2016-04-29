@@ -27,4 +27,9 @@ public class CustomStaggerGridLayoutManager extends StaggeredGridLayoutManager i
     public int lastVisiblePosition() {
         return 0;
     }
+
+    @Override
+    public int firstVisiblePosition() {
+        return 0;
+    }
 }

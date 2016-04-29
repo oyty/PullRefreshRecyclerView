@@ -23,4 +23,18 @@ public class CustomLinearLayoutManager extends LinearLayoutManager implements IL
         return findLastVisibleItemPosition();
     }
 
+    @Override
+    public int firstVisiblePosition() {
+        return findFirstVisibleItemPosition();
+    }
+
+    @Override
+    public int getChildCount() {
+        return super.getChildCount();
+    }
+
+    @Override
+    public int getItemCount() {
+        return super.getItemCount();
+    }
 }
